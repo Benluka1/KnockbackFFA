@@ -1,0 +1,13 @@
+name: KnockbackFFA
+version: 1.0
+authore: MrKavatch
+main: eu.mrkavatch.knockbackffa.Main
+commands:
+     setspawn:
+     countkills:
+     lowpos:
+     stats:
+     seteffect:
+     setstick:
+     setdamage:
+     stats:
