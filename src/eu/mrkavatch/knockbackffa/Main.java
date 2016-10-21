@@ -14,8 +14,9 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
@@ -30,6 +31,7 @@ public class Main extends JavaPlugin implements Listener
 	public static boolean effekt = false;
 	public static boolean countkills = false;
 	public static int lowpos = 0;
+	public static String pr = "§cKnockbackFFA§9>§7"; 
 	public static ItemStack startItem = Config.getStick();
 	public static HashMap<Player, Player> lastDamage = new HashMap<Player, Player>();
 
@@ -45,7 +47,7 @@ public class Main extends JavaPlugin implements Listener
 			spawn = Config.getSpawn();
 		} catch (Exception e)
 		{
-			Bukkit.broadcastMessage("Es wurde kein Spawn gefunden bitte melde dich bei einem Admin oder erstelle einen mit /setspawn");
+			Bukkit.broadcastMessage(pr + "Es wurde kein Spawn gefunden bitte melde dich bei einem Admin oder erstelle einen mit /setspawn");
 		}
 
 		damage = Config.getDamage();
@@ -78,7 +80,7 @@ public class Main extends JavaPlugin implements Listener
 					return false;
 				}
 				Config.setSpawn(p.getLocation());
-				p.sendMessage("Du hast den Spawn umgesetzt!");
+				p.sendMessage(pr + "§7Du hast den Spawn umgesetzt!");
 			}
 			if (command.getName().equalsIgnoreCase("setstick"))
 			{
@@ -89,10 +91,10 @@ public class Main extends JavaPlugin implements Listener
 				if (p.getItemInHand() != null || p.getItemInHand() != new ItemStack(Material.AIR))
 				{
 					Config.setStick(p.getItemInHand());
-					p.sendMessage("Du hast das Item in deiner Hand als neuen Knockbackstick festgesetzt!");
+					p.sendMessage(pr + "§7Du hast das Item in deiner Hand als neuen Knockbackstick festgesetzt!");
 				} else
 				{
-					p.sendMessage("Bitte nehme ein Item in die Hand");
+					p.sendMessage(pr + "§7Bitte nehme ein Item in die Hand");
 				}
 			}
 			if (command.getName().equalsIgnoreCase("seteffect"))
@@ -105,12 +107,12 @@ public class Main extends JavaPlugin implements Listener
 				{
 					effekt = false;
 					Config.setEffect(false);
-					p.sendMessage("Der Effekt wurde Deaktiviert");
+					p.sendMessage(pr + "§7Der Effekt wurde Deaktiviert");
 				} else
 				{
 					effekt = true;
 					Config.setEffect(true);
-					p.sendMessage("Der Effekt wurde Aktiviert");
+					p.sendMessage(pr + "§7Der Effekt wurde Aktiviert");
 				}
 			}
 
@@ -124,12 +126,12 @@ public class Main extends JavaPlugin implements Listener
 				{
 					damage = false;
 					Config.setDamage(false);
-					p.sendMessage("Der Schaden wurde Deaktiviert");
+					p.sendMessage(pr + "§7Der Schaden wurde Deaktiviert");
 				} else
 				{
 					damage = true;
 					Config.setDamage(true);
-					p.sendMessage("Der Schaden wurde Aktiviert");
+					p.sendMessage(pr + "§7Der Schaden wurde Aktiviert");
 				}
 			}
 
@@ -142,21 +144,23 @@ public class Main extends JavaPlugin implements Listener
 				if (args.length == 1)
 				{
 					Config.setlowestPos(Integer.parseInt(args[0]));
-					p.sendMessage("Die Niedrigste Position wurde auf " + args[0] + " gesetzt");
+					p.sendMessage(pr + "Die Niedrigste Position wurde auf " + args[0] + " gesetzt");
 				}
 			}
 			if (command.getName().equalsIgnoreCase("stats"))
 			{
-				if (!p.hasPermission("ffa.commands"))
+				if (countkills)
 				{
-					return false;
-				}
-				if (args.length == 1)
-				{
-					p.sendMessage("Der Spieler " + args[0] + " hat " + Config.getKills(Bukkit.getPlayer(args[0])) + " Kills");
+					if (args.length == 1)
+					{
+						p.sendMessage(pr + "Der Spieler " + args[0] + " hat " + Config.getKills(Bukkit.getPlayer(args[0])) + " Kills");
+					} else
+					{
+						p.sendMessage(pr + "Bitte gebe einen Namen an.");
+					}
 				} else
 				{
-					p.sendMessage("Bitte gebe einen Namen an.");
+					p.sendMessage(pr + "Kills werden nicht mitgeschrieben.");
 				}
 			}
 			if (command.getName().equalsIgnoreCase("countkills"))
@@ -169,12 +173,12 @@ public class Main extends JavaPlugin implements Listener
 				{
 					countkills = false;
 					Config.setCountPoints(false);
-					p.sendMessage("Kills werden nicht mehr mitgezählt");
+					p.sendMessage(pr + "Kills werden nicht mehr mitgezählt");
 				} else
 				{
 					countkills = true;
 					Config.setCountPoints(true);
-					p.sendMessage("Kills werden nun mitgezählt");
+					p.sendMessage(pr + "Kills werden nun mitgezählt");
 				}
 			}
 
@@ -201,6 +205,19 @@ public class Main extends JavaPlugin implements Listener
 	}
 
 	@EventHandler
+	public void onDeath(PlayerDeathEvent event)
+	{
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+
+			@Override
+			public void run()
+			{
+				event.getEntity().spigot().respawn();
+			}
+		}, 5);
+	}
+
+	@EventHandler
 	public void onDamage(EntityDamageByEntityEvent event)
 	{
 		if (!event.isCancelled())
@@ -216,9 +233,10 @@ public class Main extends JavaPlugin implements Listener
 				}
 				Main.lastDamage.put(player1, player2);
 			}
-		} else {
+		} else
+		{
 		}
-		
+
 		try
 		{
 			if (!Main.damage)
@@ -305,20 +323,17 @@ public class Main extends JavaPlugin implements Listener
 	@EventHandler
 	public void onRespanw(PlayerRespawnEvent event)
 	{
-		if (Main.spawn.getWorld() != null)
-		{
-			event.getPlayer().getInventory().clear();
-			Methoden.giveItems(event.getPlayer());
-			Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+		event.getPlayer().getInventory().clear();
+		Methoden.giveItems(event.getPlayer());
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 
-				@Override
-				public void run()
-				{
-					event.getPlayer().teleport(Main.spawn);
+			@Override
+			public void run()
+			{
+				event.getPlayer().teleport(Main.spawn);
 
-				}
-			}, 2);
-		}
+			}
+		}, 2);
 	}
 
 }
