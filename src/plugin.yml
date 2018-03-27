@@ -1,6 +1,6 @@
 name: KnockbackFFA
 version: 1.0
-authore: MrKavatch
+authore: Benluka
 main: eu.mrkavatch.knockbackffa.Main
 commands:
      setspawn:
